@@ -24,5 +24,11 @@ const otpSchema = new mongoose.Schema({
 });
 
 otpSchema.pre("save", async function (next) {
-    
+  if (this.isNew) {
+    const salt = await bcrypt.genSalt(10);
+    await sendVerificationMail(this.email, this.otp, this.otp_type);
+    this.otp = await bcrypt.hash(this.otp, salt)
+  }
+
+  next();
 });
