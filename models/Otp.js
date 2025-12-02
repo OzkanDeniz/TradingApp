@@ -33,6 +33,10 @@ otpSchema.pre("save", async function (next) {
   next();
 });
 
+otpSchema.methods.compareOtp = async function (enteredOtp) {
+  return await bcrypt.compare(enteredOtp, this.otp);
+};
+
 async function sendVerificationMail(email, otp, otp_type) {
   try {
     const mailResponse = await mailSender(email, otp, otp_type);
