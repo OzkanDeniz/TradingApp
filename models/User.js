@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import {
+  UnauthenticateadError,
+  BadRequestError,
+  NotFoundError,
+} from "../errors/index.js";
 
 const UserSchema = new mongoose.Schema(
   {
@@ -42,7 +47,7 @@ const UserSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    blocked_until_ğin: {
+    blocked_until_pin: {
       type: Date,
       default: null,
     },
@@ -54,6 +59,43 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+UserSchema.pre("save", async function () {
+  if (this.isModified("password")) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+  }
+});
+
+UserSchema.pre("save", async function () {
+  if (this.isModified("login_pin")) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.login_pin, salt);
+  }
+});
+
+UserSchema.statics.updatePIN = async function (email, newPIN) {
+  try {
+    const user = await this.findOne({ email });
+
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+
+    const isSamePIN = await bcrypt.compare(newPIN, user.login_pin);
+    if (isSamePIN) {
+      throw new BadRequestError("New PIN must be different from the old PIN");
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPIN = await bcrypt.hash(newPIN, salt);
+
+    await this.findOneAndUpdate( { email }, { login_pin: hashedPIN, wrong_pin_attemps: 0, blocked_until_pin: null });
+
+  } catch (error) {
+    throw error;
+  }
+};
+
 const User = mongoose.model("User", UserSchema);
 
-export default User
+export default User;
