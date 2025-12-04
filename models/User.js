@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
+import bcrypt, { hash } from "bcryptjs";
 import jwt from "jsonwebtoken";
 import {
   UnauthenticateadError,
@@ -89,8 +89,39 @@ UserSchema.statics.updatePIN = async function (email, newPIN) {
     const salt = await bcrypt.genSalt(10);
     const hashedPIN = await bcrypt.hash(newPIN, salt);
 
-    await this.findOneAndUpdate( { email }, { login_pin: hashedPIN, wrong_pin_attemps: 0, blocked_until_pin: null });
+    await this.findOneAndUpdate(
+      { email },
+      { login_pin: hashedPIN, wrong_pin_attemps: 0, blocked_until_pin: null }
+    );
 
+    return { success: true, message: "PIN uptadet successfully" };
+  } catch (error) {
+    throw error;
+  }
+};
+
+UserSchema.statics.updatePassword = async function (email, newPassword) {
+  try {
+    const user = await user.findOne({ email });
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      throw new BadRequestError(
+        "New password must be different from the old password"
+      );
+    }
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    await User.findOneAndUpdate(
+      { email },
+      {
+        password: hashedPassword,
+        wrong_passwod_attemps: 0,
+        blocked_until_password: null,
+      }
+    );
   } catch (error) {
     throw error;
   }
