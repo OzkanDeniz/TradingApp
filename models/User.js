@@ -173,11 +173,19 @@ UserSchema.methods.comparePIN = async function comparePIN(candidatePIN) {
   return isMatch;
 };
 
-UserSchema.methods.crateAccessToken = function () {
+UserSchema.methods.createAccessToken = function () {
   return jwt.sign(
     { userId: this.id, name: this.name },
     process.env.JWT_SECRET,
     { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
+  );
+};
+
+UserSchema.methods.createRefreshToken = function () {
+  return jwt.sign(
+    { userId: this.id, name: this.name },
+    process.env.REFRESH_TOKEN_SECRET,
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
   );
 };
 const User = mongoose.model("User", UserSchema);
