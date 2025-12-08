@@ -2,9 +2,9 @@ import mongoose from "mongoose";
 import bcrypt, { hash } from "bcryptjs";
 import jwt from "jsonwebtoken";
 import {
-  UnauthenticateadError,
   BadRequestError,
   NotFoundError,
+  UnauthenticatedError,
 } from "../errors/index.js";
 
 const UserSchema = new mongoose.Schema(
@@ -102,7 +102,7 @@ UserSchema.statics.updatePIN = async function (email, newPIN) {
 
 UserSchema.statics.updatePassword = async function (email, newPassword) {
   try {
-    const user = await user.findOne({ email });
+    const user = await this.findOne({ email });
     if (!user) {
       throw new NotFoundError("User not found");
     }
@@ -125,6 +125,29 @@ UserSchema.statics.updatePassword = async function (email, newPassword) {
   } catch (error) {
     throw error;
   }
+};
+
+UserSchema.methods.comparePassword = async function (candidatePassword) {
+  if (this.blocked_until_password && this.blocked_until_password > new Date()) {
+    throw new UnauthenticatedError(
+      "Invalid Login attempts exceeded. Please try again after 30 minutes.   "
+    );
+  }
+
+  const isMatch = await bcrypt.compare(candidatePassword, this.password);
+  if (!isMatch) {
+    this.wrong_password_attemps += 1;
+    if (this.wrong_password_attemps >= 3) {
+      this.blocked_until_password = new Date(Date.now() + 30 * 60 * 1000);
+      this.wrong_password_attemps = 0;
+    }
+    await this.save();
+  } else {
+    this.wrong_password_attemps = 0;
+    this.blocked_until_password = null;
+    await this.save();
+  }
+  return isMatch;
 };
 
 const User = mongoose.model("User", UserSchema);
