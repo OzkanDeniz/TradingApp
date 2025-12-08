@@ -173,6 +173,13 @@ UserSchema.methods.comparePIN = async function comparePIN(candidatePIN) {
   return isMatch;
 };
 
+UserSchema.methods.crateAccessToken = function () {
+  return jwt.sign(
+    { userId: this.id, name: this.name },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
+  );
+};
 const User = mongoose.model("User", UserSchema);
 
 export default User;
