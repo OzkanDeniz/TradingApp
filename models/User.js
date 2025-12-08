@@ -150,6 +150,29 @@ UserSchema.methods.comparePassword = async function (candidatePassword) {
   return isMatch;
 };
 
+UserSchema.methods.comparePIN = async function comparePIN(candidatePIN) {
+  if (this.blocked_until_pin && this.blocked_until_pin > new Date()) {
+    throw new UnauthenticatedError("Limit Exceeded, try after 30 minutes.");
+  }
+
+  const hashedPIN = this.login_pin;
+  const isMatch = await bcrypt.compare(candidatePIN, hashedPIN);
+
+  if (!isMatch) {
+    this.wrong_pin_attemps += 1;
+    if (this.wrong_pin_attemps >= 3) {
+      this.blocked_until_pin = new Date(Date.now() + 30 * 60 * 1000);
+      this.wrong_pin_attemps = 0;
+    }
+    await this.save();
+  } else {
+    this.wrong_pin_attemps = 0;
+    this.blocked_until_pin = null;
+    await save();
+  }
+  return isMatch;
+};
+
 const User = mongoose.model("User", UserSchema);
 
 export default User;
