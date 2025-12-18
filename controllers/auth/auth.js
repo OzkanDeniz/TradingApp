@@ -1,5 +1,5 @@
 import { StatusCode } from "http-status-code";
-import { BadRequestError, UnauthenticatednError } from "../../errors/index.js";
+import { BadRequestError, UnauthenticatedError } from "../../errors/index.js";
 import jwt from "jsonwebtoken";
 import User from "../../models/User.js";
 
@@ -40,4 +40,18 @@ const login = async (req, res) => {
   }
 
   const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new UnauthenticatedError("Invalid Credentials");
+  }
+
+  const isPasswordCorrect = await user.comparePassword(password);
+  if (!isPasswordCorrect) {
+    let message;
+
+    if(user.blocked_until_password && user.blocked_until_password > new Date()){
+        const remainingMinutes = Math.ceil((user.blocked_until_password - new Date()) / (60*1000))
+        message = `Your account is blocked for password. Please try again after ${remainingMinutes} minute(s)`
+    }
+  }
 };
