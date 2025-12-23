@@ -58,4 +58,24 @@ const login = async (req, res) => {
     }
     throw new UnauthenticatedError(message)
   }
+
+  const access_token = user.createAccessToken()
+  const refresh_token = user.createRefreshToken()
+
+  let phone_exist = false
+  let login_pin_exist = false
+
+  if(user.phone_number){
+     phone_exist = true
+  }
+  if(user.login_pin){
+     login_pin_exist = true
+  }
+
+  res.status(StatusCode.OK).json({
+    user:{name:user.name, email:user.email, userId:user._id, phone_exist, login_pin_exist},
+    tokens:{access_token, refresh_token}
+  })
 };
+
+export { register, login}
