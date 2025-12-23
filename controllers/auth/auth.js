@@ -52,6 +52,10 @@ const login = async (req, res) => {
     if(user.blocked_until_password && user.blocked_until_password > new Date()){
         const remainingMinutes = Math.ceil((user.blocked_until_password - new Date()) / (60*1000))
         message = `Your account is blocked for password. Please try again after ${remainingMinutes} minute(s)`
+    }else{
+      const attemptsRemaining = 3 - user.wrong_password_attempts; 
+      message = attemptsRemaining > 0 ? `Invalid password, ${attemptsRemaining} attemptsRemaining` : "Invalid Login attempts exceeded, Please try after 30 minutes"
     }
+    throw new UnauthenticatedError(message)
   }
 };
