@@ -161,8 +161,8 @@ async function generateRefreshTokens(
 }
 
 const logout = async (req, res) => {
-  if(!req.headers.authorization){
-    throw new UnauthenticatedError("No token provided")
+  if (!req.headers.authorization) {
+    throw new UnauthenticatedError("No token provided");
   }
   const accessToken = req.headers.authorization.split(" ")[1];
   const decodedToken = jwt.verify(accessToken, process.env.JWT_SECRET);
