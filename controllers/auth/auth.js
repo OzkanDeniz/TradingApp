@@ -161,8 +161,11 @@ async function generateRefreshTokens(
 }
 
 const logout = async (req, res) => {
-  const accessToken = req.headers.authorization.split("")[1];
-  const decodedToken = jwt.decode(accessToken, process.env.JWT_SECRET);
+  if(!req.headers.authorization){
+    throw new UnauthenticatedError("No token provided")
+  }
+  const accessToken = req.headers.authorization.split(" ")[1];
+  const decodedToken = jwt.verify(accessToken, process.env.JWT_SECRET);
   const userId = decodedToken.userId;
   await User.updateOne(({ _id: userId }, { $unset: { biometricKey: 1 } }));
   res.status(StatusCode.OK).json({ message: "Logged out succcesfully" });
