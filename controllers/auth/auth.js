@@ -171,4 +171,4 @@ const logout = async (req, res) => {
   res.status(StatusCode.OK).json({ message: "Logged out succcesfully" });
 };
 
-export { register, login, refreshToken };
+export { register, login, refreshToken, logout };
