@@ -96,20 +96,41 @@ const login = async (req, res) => {
   });
 };
 
-const refreshToken = async (req, res)=>{
-  const {type, refresh_token} = req.body
-  if(!type || !["socket", "app"].includes(type) || !refresh_token){
-    throw new BadRequestError("Invalid body")
+const refreshToken = async (req, res) => {
+  const { type, refresh_token } = req.body;
+  if (!type || !["socket", "app"].includes(type) || !refresh_token) {
+    throw new BadRequestError("Invalid body");
   }
-  try{
-    let accessToken,newRefreshToken;
-    if(type === "app"){
-      ({access_token:accessToken, newRefreshToken} = await generateRefreshTokens())
-    } 
+  try {
+    let accessToken, newRefreshToken;
+    if (type === "app") {
+      ({ access_token: accessToken, newRefreshToken } =
+        await generateRefreshTokens(
+          refresh_token,
+          process.env.REFRESH_SECRET,
+          process.env.REFRESH_EXPIRY,
+          process.env.ACCESS_SECRET,
+          process.env.ACCESS_EXPIRY
+        ));
+    } else if (type === "socket") {
+      ({ access_token: accessToken, newRefreshToken } =
+        await generateRefreshTokens(
+          refresh_token,
+          process.env.SOCKET_REFRESH_SECRET,
+          process.env.SOCKET_REFRESH_EXPIRY,
+          process.env.SOCKET_ACCESS_SECRET,
+          process.env.SOCKET_ACCESS_EXPIRY
+        ));
+    }
 
+    res
+      .status(StatusCode.OK)
+      .json({ access_token: accessToken, refresh_token: newRefreshToken });
+  } catch (error) {
+    console.error(error);
+    throw new UnauthenticatedError("Invalid Token");
   }
-
-}
+};
 
 async function generateRefreshTokens(
   token,
@@ -124,14 +145,19 @@ async function generateRefreshTokens(
     if (!user) {
       throw new NotFoundError("User not found");
     }
-    const access_token = jwt.sign({ userId: payload.userId }, access_secret, {expiresIn: access_expiry});
-    const newRefreshToken = jwt.sign({ userId: payload.userId }, refresh_secret, {expiresIn: refresh_expiry});
-    return {access_token, newRefreshToken}
-
+    const access_token = jwt.sign({ userId: payload.userId }, access_secret, {
+      expiresIn: access_expiry,
+    });
+    const newRefreshToken = jwt.sign(
+      { userId: payload.userId },
+      refresh_secret,
+      { expiresIn: refresh_expiry }
+    );
+    return { access_token, newRefreshToken };
   } catch (error) {
-    console.error(error)
-    throw new UnauthenticatedError("Invalid Token")
+    console.error(error);
+    throw new UnauthenticatedError("Invalid Token");
   }
 }
 
-export { register, login };
+export { register, login, refreshToken };
