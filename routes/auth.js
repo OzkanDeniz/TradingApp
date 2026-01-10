@@ -13,3 +13,5 @@ router.post("/refresh-token", refreshToken);
 router.post("/logout", authenticateUser, logout);
 router.post("/register", register);
 router.post("/login", login);
+
+export default router
