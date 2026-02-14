@@ -38,7 +38,24 @@ switch (otp_type) {
     if (!data || data.length != 4) {
       throw new BadRequestError("PIN should be 4 Digit ");
     }
-
-  default:
+    await User.updatePIN(email, data);
     break;
+  case "reset password":
+    await User.updatePassword(email, data);
+    break;
+  default:
+    throw new BadRequestError("Invalid OTP request type");
 }
+
+const user = await User.findOne({ email });
+
+if (otp_type === "email" && !user) {
+  const register_token = jwt.sign({ email }, process.env.REGISTER_SECRET, {
+    expiresIn: process.env.REGISTER_SECRET_EXPIRY,
+  });
+  return res
+    .status(StatusCodes.OK)
+    .json({ msg: "OTP verified successfully", register_token });
+}
+
+res.status(StatusCodes.OK).json({ msg: "OTP verified successfully"})
