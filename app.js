@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import { createServer } from "http";
 import swaggerUI from "swagger-ui-express";
 import YAML from "yamljs";
+import notFoundMiddleware from "./middleware/not-found.js";
+import errorHandlerMiddleware from "./middleware/error-handler.js";
 import cors from "cors";
 import connectDB from "./db/connect.js";
 import authRouter from "./routes/auth.js";
@@ -24,16 +26,17 @@ app.get("/", (req, res) => {
   res.send('<h1>Trading API</h1><a href="/api-docs">Documentation</a>');
 });
 
-//SWAGGER API DOCS
-
+// SWAGGER API DOCS
 const swaggerDocument = YAML.load(join(__dirname, "./docs/swagger.yaml"));
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerDocument));
 
-//ROUTES
-
+// ROUTES
 app.use("/auth", authRouter);
 
-//MIDDLEWARES
+// MIDDLEWARES
+app.use(cors());
+app.use(notFoundMiddleware);
+app.use(errorHandlerMiddleware);
 
-app.use(cors())
-app.use(notFound)
+
+// START SERVER
