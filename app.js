@@ -38,5 +38,17 @@ app.use(cors());
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
 
-
 // START SERVER
+const start = async () => {
+  try {
+    await connectDB(process.env.MONGO_URI);
+    const PORT = process.env.PORT || 3000;
+    httpServer.listen(PORT, () =>
+      console.log(`Server is listening on port ${PORT}...`),
+    );
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+start();
