@@ -58,4 +58,20 @@ if (otp_type === "email" && !user) {
     .json({ msg: "OTP verified successfully", register_token });
 }
 
-res.status(StatusCodes.OK).json({ msg: "OTP verified successfully"})
+res.status(StatusCodes.OK).json({ msg: "OTP verified successfully" });
+
+const sendOtp = async (req, res) => {
+  const { email, otp_type } = req.body;
+
+  if (!email || !otp_type) {
+    throw new BadRequestError("Please provide all values");
+  }
+
+  const user = User.findOne({ email });
+
+  if (otp_type === "phone") {
+    if (!user) {
+      throw new BadRequestError("User not found");
+    }
+  }
+};
