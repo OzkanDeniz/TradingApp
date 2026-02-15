@@ -28,14 +28,14 @@ if (!isVerified) {
   throw new BadRequestError("Invalid OTP or OTP expired");
 }
 
-await OTP.findbyIdAndDelete(otpRecord.id);
+await OTP.findByIdAndDelete(otpRecord.id);
 
 switch (otp_type) {
   case "phone":
     await User.findOneAndUpdate({ email }, { phone_number: data });
     break;
   case "reset pin":
-    if (!data || data.length != 4) {
+    if (!data || data.length !== 4) {
       throw new BadRequestError("PIN should be 4 Digit ");
     }
     await User.updatePIN(email, data);
@@ -67,13 +67,13 @@ const sendOtp = async (req, res) => {
     throw new BadRequestError("Please provide all values");
   }
 
-  const user = User.findOne({ email });
+  const user = await User.findOne({ email });
 
   if (otp_type === "phone") {
     if (!user) {
       throw new BadRequestError("User not found ");
     }
-    if (user.phone_number === data) {
+    if (user.phone_number === req.body.data) {
       throw new BadRequestError("This phone number already in use ");
     }
   } else if (otp_type === "email") {
@@ -96,3 +96,5 @@ const sendOtp = async (req, res) => {
     .status(StatusCodes.OK)
     .json({ msg: "OTP sent to your email successfully" });
 };
+
+export { verifyOtp, sendOtp };
