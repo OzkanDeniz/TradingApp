@@ -10,7 +10,7 @@ const verifyOtp = async (req, res) => {
 
   if (!email || !otp || !otp_type) {
     throw new BadRequestError("Please provide all values");
-  } else if (!otp_type !== "email" && !data) {
+  } else if (otp_type !== "email" && !data) {
     throw new BadRequestError("Please provide all values");
   }
 };
@@ -71,7 +71,28 @@ const sendOtp = async (req, res) => {
 
   if (otp_type === "phone") {
     if (!user) {
-      throw new BadRequestError("User not found");
+      throw new BadRequestError("User not found ");
     }
+    if (user.phone_number === data) {
+      throw new BadRequestError("This phone number already in use ");
+    }
+  } else if (otp_type === "email") {
+    if (user) {
+      throw new BadRequestError("Email already in use ");
+    }
+  } else if (otp_type === "reset_password" || otp_type === "reset_pin") {
+    if (!user) {
+      throw new BadRequestError("User not found ");
+    }
+  } else {
+    throw new BadRequestError("Invalid OTP Request type ");
   }
+
+  const generatedOtp = generateOtp();
+  const otpRecord = new OTP({ email, otp: generatedOtp, otp_type });
+  await otpRecord.save();
+
+  res
+    .status(StatusCodes.OK)
+    .json({ msg: "OTP sent to your email successfully" });
 };
